@@ -754,7 +754,28 @@ module Sinatra
         xml.target!
       end
 
-  end
+    end
+
+    module Markaby
+      def mab(content=nil, options={}, &block)
+        content = Proc.new { block } if content.nil?
+        render(:mab, content, options)
+      end
+
+      private
+
+      def render_mab(content, options ={}, &block)
+        require 'markaby'
+        output = ::Markaby::Builder.new(options.fetch(:locals){{}},
+                                        options.fetch(:scope){self})
+        case content
+        when String then output.instance_eval(content)
+        when Proc then output.capture(&content)
+        else raise NotImplementedError
+        end
+      end
+    end
+
 
   class EventContext
     
@@ -765,7 +786,8 @@ module Sinatra
     include Haml
     include Builder
     include Sass
-    
+    include Markaby
+
     attr_accessor :request, :response
     
     dslify_writer :status, :body
